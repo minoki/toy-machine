@@ -1,0 +1,45 @@
+%%
+
+%pos int
+
+%term INT of int
+    | NAME of string
+    | NIL
+    | LPAREN
+    | RPAREN
+    | LAMBDA
+    | IF
+    | PLUS
+    | MINUS
+    | LT
+    | LE
+    | PRINT
+    | EOF
+%nonterm EXP of Syntax.exp
+       | PROGRAM of Syntax.exp list
+       | START of Syntax.exp list
+
+%name ToyLang
+
+%eop EOF
+%noshift EOF
+%start START
+
+%%
+
+START : PROGRAM (PROGRAM)
+
+PROGRAM : ([])
+        | EXP PROGRAM (EXP :: PROGRAM)
+
+EXP : NIL (Syntax.NIL)
+    | INT (Syntax.INT INT)
+    | NAME (Syntax.VAR NAME)
+    | LPAREN LAMBDA LPAREN NAME RPAREN EXP RPAREN (Syntax.LAMBDA (NAME, EXP))
+    | LPAREN IF EXP EXP EXP RPAREN (Syntax.IF (EXP1, EXP2, EXP3))
+    | LPAREN PLUS EXP EXP RPAREN (Syntax.PLUS (EXP1, EXP2))
+    | LPAREN MINUS EXP EXP RPAREN (Syntax.MINUS (EXP1, EXP2))
+    | LPAREN LT EXP EXP RPAREN (Syntax.LT (EXP1, EXP2))
+    | LPAREN LE EXP EXP RPAREN (Syntax.LE (EXP1, EXP2))
+    | LPAREN PRINT EXP RPAREN (Syntax.PRINT EXP)
+    | LPAREN EXP EXP RPAREN (Syntax.APP (EXP1, EXP2))
