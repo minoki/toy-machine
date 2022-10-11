@@ -5,4 +5,7 @@ parser.grm.sig
 lexer.lex.sml
 parser.grm.sml
 parser.sml
+instruction.sml
+compiler.sml
+interpreter.sml
 main.sml

@@ -12,6 +12,9 @@ SOURCES = \
   lexer.lex.sml \
   parser.grm.sml \
   parser.sml \
+  instruction.sml \
+  compiler.sml \
+  interpreter.sml \
   main.sml
 
 toylang: toylang.mlb $(SOURCES)
