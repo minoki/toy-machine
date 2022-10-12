@@ -2,7 +2,7 @@ structure Interpreter = struct
 datatype value = NIL
                | BOOL of bool
                | INT of int
-               | FUNCTION of Instruction.instruction list
+               | CLOSURE of Instruction.instruction list * value vector
 type frame = { base : int
              , return : Instruction.instruction list
              }
@@ -26,10 +26,15 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
         | OP_PUSH_NIL => run (insns, stack, push (stack, stackTop, NIL), frames, framesTop, base)
         | OP_PUSH_INT n => run (insns, stack, push (stack, stackTop, INT n), frames, framesTop, base)
         | OP_PUSH_LOCAL i => run (insns, stack, push (stack, stackTop, Array.sub (stack, base + i)), frames, framesTop, base)
+        | OP_PUSH_FREE i => let val currentClosure = Array.sub (stack, base)
+                            in case currentClosure of
+                                   CLOSURE (_, free) => run (insns, stack, push (stack, stackTop, Vector.sub (free, i)), frames, framesTop, base)
+                                 | _ => raise Fail "type error"
+                            end
         | OP_CALL => let val newFrame = { base = base, return = insns }
                      in Array.update (frames, framesTop, newFrame)
                       ; case Array.sub (stack, stackTop - 2) of
-                            FUNCTION insns' => run (insns', stack, stackTop, frames, framesTop + 1, stackTop - 2)
+                            CLOSURE (insns', _) => run (insns', stack, stackTop, frames, framesTop + 1, stackTop - 2)
                           | _ => raise Fail "type error: expected function"
                      end
         | OP_RETURN => let val frame = Array.sub (frames, framesTop - 1)
@@ -37,7 +42,9 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                        in Array.update (stack, base, result)
                         ; run (#return frame, stack, base + 1, frames, framesTop - 1, #base frame)
                        end
-        | OP_FUNCTION body => run (insns, stack, push (stack, stackTop, FUNCTION body), frames, framesTop, base)
+        | OP_CLOSURE { body, nFreeVars } => let val freeVars = Vector.tabulate (nFreeVars, fn i => Array.sub (stack, stackTop - nFreeVars + i))
+                                            in run (insns, stack, push (stack, stackTop - nFreeVars, CLOSURE (body, freeVars)), frames, framesTop, base)
+                                            end
         | OP_JUMP_IF_FALSE offset => let val (stackTop, value) = pop (stack, stackTop)
                                      in case value of
                                             BOOL true => run (insns, stack, stackTop, frames, framesTop, base)
@@ -74,7 +81,7 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                              NIL => print "nil\n"
                            | BOOL b => print (Bool.toString b ^ "\n")
                            | INT n => print (Int.toString n ^ "\n")
-                           | FUNCTION _ => print "<function>\n"
+                           | CLOSURE _ => print "<function>\n"
                        ; run (insns, stack, push (stack, stackTop, NIL), frames, framesTop, base)
                       end
 fun runProgram insns = let val stack = newStack ()
