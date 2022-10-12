@@ -14,4 +14,4 @@ print "---\n";
 val insns = Compiler.compileProgram program;
 List.app (fn insn => print (Instruction.toString insn ^ "\n")) insns;
 print "---\n";
-Interpreter.run (insns, Interpreter.newStack (), 0);
+Interpreter.runProgram insns;
