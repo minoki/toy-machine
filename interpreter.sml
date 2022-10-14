@@ -9,7 +9,10 @@ type frame = { base : int
 type frames = frame array
 type stack = value array
 local open Instruction
-      fun push (stack, stackTop, value) = (Array.update (stack, stackTop, value); stackTop + 1)
+      fun push (stack, stackTop, value) = if stackTop >= Array.length stack then
+                                              raise Fail "stack overflow"
+                                          else
+                                              (Array.update (stack, stackTop, value); stackTop + 1)
       fun pop (stack, stackTop) = let val stackTop = stackTop - 1
                                   in (stackTop, Array.sub (stack, stackTop))
                                   end
