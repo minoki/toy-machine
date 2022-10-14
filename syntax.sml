@@ -3,6 +3,7 @@ datatype exp = NIL
              | INT of int
              | VAR of string
              | LAMBDA of string * exp
+             | LET of (string * exp) list * exp
              | IF of exp * exp * exp
              | APP of exp * exp
              | PLUS of exp * exp
@@ -14,6 +15,7 @@ fun toString NIL = "nil"
   | toString (INT n) = Int.toString n
   | toString (VAR name) = name
   | toString (LAMBDA (name, body)) = "(lambda (" ^ name ^ ") " ^ toString body ^ ")"
+  | toString (LET (bindings, body)) = "(let (" ^ String.concatWith " " (List.map (fn (name, exp) => "(" ^ name ^ " " ^ toString exp ^ ")") bindings) ^ ") " ^ toString body ^ ")"
   | toString (IF (a, b, c)) = "(if " ^ toString a ^ " " ^ toString b ^ " " ^ toString c ^ ")"
   | toString (APP (a, b)) = "(" ^ toString a ^ " " ^ toString b ^ ")"
   | toString (PLUS (a, b)) = "(+ " ^ toString a ^ " " ^ toString b ^ ")"
@@ -29,6 +31,9 @@ fun freeVars (bound, NIL) = StringSet.empty
                                  then StringSet.empty
                                  else StringSet.singleton name
   | freeVars (bound, LAMBDA (name, body)) = freeVars (StringSet.add (bound, name), body)
+  | freeVars (bound, LET (bindings, body)) = let val (bound, free) = List.foldl (fn ((name, exp), (b, s)) => (StringSet.add (b, name), StringSet.union (freeVars (bound, exp), s)) ) (bound, StringSet.empty) bindings
+                                             in StringSet.union (free, freeVars (bound, body))
+                                             end
   | freeVars (bound, IF (a, b, c)) = StringSet.union (freeVars (bound, a), StringSet.union (freeVars (bound, b), freeVars (bound, c)))
   | freeVars (bound, APP (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
   | freeVars (bound, PLUS (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))

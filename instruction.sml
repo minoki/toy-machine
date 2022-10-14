@@ -1,5 +1,6 @@
 structure Instruction = struct
 datatype instruction = OP_POP
+                     | OP_POP_EXCEPT_TOP of int
                      | OP_PUSH_NIL
                      | OP_PUSH_INT of int
                      | OP_PUSH_LOCAL of int
@@ -15,6 +16,7 @@ datatype instruction = OP_POP
                      | OP_LE
                      | OP_PRINT
 fun toString OP_POP = "OP_POP"
+  | toString (OP_POP_EXCEPT_TOP n) = "OP_POP_EXCEPT_TOP(" ^ Int.toString n ^ ")"
   | toString OP_PUSH_NIL = "OP_PUSH_NIL"
   | toString (OP_PUSH_INT n) = "OP_PUSH_INT(" ^ Int.toString n ^ ")"
   | toString (OP_PUSH_LOCAL n) = "OP_PUSH_LOCAL(" ^ Int.toString n ^ ")"

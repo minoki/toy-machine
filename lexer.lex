@@ -22,6 +22,7 @@ alnum = [a-zA-Z0-9];
 "(" => (Tokens.LPAREN (0, 0));
 ")" => (Tokens.RPAREN (0, 0));
 "lambda" => (Tokens.LAMBDA (0, 0));
+"let" => (Tokens.LET (0, 0));
 "if" => (Tokens.IF (0, 0));
 "nil" => (Tokens.NIL (0, 0));
 "print" => (Tokens.PRINT (0, 0));

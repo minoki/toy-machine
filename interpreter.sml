@@ -23,6 +23,10 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
           OP_POP => if stackTop = 0
                     then raise Fail "stack underflow"
                     else run (insns, stack, stackTop - 1, frames, framesTop, base)
+        | OP_POP_EXCEPT_TOP n => let val (stackTop, top) = pop (stack, stackTop)
+                                 in Array.update (stack, stackTop - n, top)
+                                  ; run (insns, stack, stackTop - n + 1, frames, framesTop, base)
+                                 end
         | OP_PUSH_NIL => run (insns, stack, push (stack, stackTop, NIL), frames, framesTop, base)
         | OP_PUSH_INT n => run (insns, stack, push (stack, stackTop, INT n), frames, framesTop, base)
         | OP_PUSH_LOCAL i => run (insns, stack, push (stack, stackTop, Array.sub (stack, base + i)), frames, framesTop, base)
