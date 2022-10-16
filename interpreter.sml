@@ -2,7 +2,7 @@ structure Interpreter = struct
 datatype value = NIL
                | BOOL of bool
                | INT of int
-               | CLOSURE of Instruction.instruction list * value vector
+               | CLOSURE of Instruction.instruction list * value array
 type frame = { base : int
              , return : Instruction.instruction list
              }
@@ -35,7 +35,7 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
         | OP_PUSH_LOCAL i => run (insns, stack, push (stack, stackTop, Array.sub (stack, base + i)), frames, framesTop, base)
         | OP_PUSH_FREE i => let val currentClosure = Array.sub (stack, base)
                             in case currentClosure of
-                                   CLOSURE (_, free) => run (insns, stack, push (stack, stackTop, Vector.sub (free, i)), frames, framesTop, base)
+                                   CLOSURE (_, free) => run (insns, stack, push (stack, stackTop, Array.sub (free, i)), frames, framesTop, base)
                                  | _ => raise Fail "type error"
                             end
         | OP_CALL => let val newFrame = { base = base, return = insns }
@@ -57,9 +57,16 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                        in Array.update (stack, base, result)
                         ; run (#return frame, stack, base + 1, frames, framesTop - 1, #base frame)
                        end
-        | OP_CLOSURE { body, nFreeVars } => let val freeVars = Vector.tabulate (nFreeVars, fn i => Array.sub (stack, stackTop - nFreeVars + i))
+        | OP_CLOSURE { body, nFreeVars } => let val freeVars = Array.tabulate (nFreeVars, fn i => Array.sub (stack, stackTop - nFreeVars + i))
                                             in run (insns, stack, push (stack, stackTop - nFreeVars, CLOSURE (body, freeVars)), frames, framesTop, base)
                                             end
+        | OP_FIX_CLOSURE { target, freeIndex, real } => let val target = Array.sub (stack, base + target)
+                                                            val real = Array.sub (stack, base + real)
+                                                        in case target of
+                                                               CLOSURE (_, free) => Array.update (free, freeIndex, real)
+                                                             | _ => raise Fail "type error: expected function"
+                                                         ; run (insns, stack, stackTop, frames, framesTop, base)
+                                                        end
         | OP_JUMP_IF_FALSE offset => let val (stackTop, value) = pop (stack, stackTop)
                                      in case value of
                                             BOOL true => run (insns, stack, stackTop, frames, framesTop, base)

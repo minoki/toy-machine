@@ -10,6 +10,7 @@
     | LAMBDA
     | LET
     | LET_STAR
+    | LETREC
     | IF
     | PLUS
     | MINUS
@@ -41,6 +42,7 @@ exp : NIL (Syntax.NIL)
     | LPAREN LAMBDA LPAREN NAME RPAREN exp RPAREN (Syntax.LAMBDA (NAME, exp))
     | LPAREN LET LPAREN bindings RPAREN exp RPAREN (Syntax.LET (bindings, exp))
     | LPAREN LET_STAR LPAREN bindings RPAREN exp RPAREN (List.foldr (fn (binding, exp) => Syntax.LET ([binding], exp)) exp bindings)
+    | LPAREN LETREC LPAREN bindings RPAREN exp RPAREN (Syntax.LETREC (bindings, exp))
     | LPAREN IF exp exp exp RPAREN (Syntax.IF (exp1, exp2, exp3))
     | LPAREN PLUS exp exp RPAREN (Syntax.PLUS (exp1, exp2))
     | LPAREN MINUS exp exp RPAREN (Syntax.MINUS (exp1, exp2))

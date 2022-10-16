@@ -9,6 +9,7 @@ datatype instruction = OP_POP
                      | OP_TAILCALL
                      | OP_RETURN
                      | OP_CLOSURE of { body : instruction list, nFreeVars : int }
+                     | OP_FIX_CLOSURE of { target : int, freeIndex : int, real : int } (* Make a recursive closure *)
                      | OP_JUMP_IF_FALSE of int
                      | OP_JUMP of int
                      | OP_PLUS
@@ -26,6 +27,7 @@ fun toString OP_POP = "OP_POP"
   | toString OP_TAILCALL = "OP_TAILCALL"
   | toString OP_RETURN = "OP_RETURN"
   | toString (OP_CLOSURE { body, nFreeVars }) = "OP_CLOSURE[" ^ String.concatWith ";" (map toString body) ^ "](" ^ Int.toString nFreeVars ^ ")"
+  | toString (OP_FIX_CLOSURE { target, freeIndex, real }) = "OP_FIX_CLOSURE(" ^ Int.toString target ^ "," ^ Int.toString freeIndex ^ "," ^ Int.toString real ^ ")"
   | toString (OP_JUMP_IF_FALSE offset) = "OP_JUMP_IF_FALSE(" ^ Int.toString offset ^ ")"
   | toString (OP_JUMP offset) = "OP_JUMP(" ^ Int.toString offset ^ ")"
   | toString OP_PLUS = "OP_PLUS"
