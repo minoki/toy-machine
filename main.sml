@@ -1,8 +1,13 @@
 fun print_error (s, p1, p2) = print (s ^ "\n");
-print "> ";
-val content = case TextIO.inputLine TextIO.stdIn of
-                  SOME ln => ln
-                | NONE => "";
+val content = case CommandLine.arguments () of
+                  [filename] => let val instream = TextIO.openIn filename
+                                in TextIO.inputAll instream before TextIO.closeIn instream
+                                end
+                | _ => ( print "> "
+                       ; case TextIO.inputLine TextIO.stdIn of
+                             SOME ln => ln
+                           | NONE => ""
+                       );
 val lexer = let val i = ref 0
             in ToyLangParser.makeLexer (fn _ => if !i = 0
                                                 then (i := 1; content)
