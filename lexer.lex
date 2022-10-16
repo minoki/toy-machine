@@ -30,6 +30,7 @@ alnum = [a-zA-Z0-9];
 "print" => (Tokens.PRINT (0, 0));
 "+" => (Tokens.PLUS (0, 0));
 "-" => (Tokens.MINUS (0, 0));
+"=" => (Tokens.EQ (0, 0));
 "<" => (Tokens.LT (0, 0));
 "<=" => (Tokens.LE (0, 0));
 "#t" => (Tokens.TRUE (0, 0));

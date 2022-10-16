@@ -10,6 +10,7 @@ datatype exp = NIL
              | APP of exp * exp
              | PLUS of exp * exp
              | MINUS of exp * exp
+             | EQ of exp * exp
              | LT of exp * exp
              | LE of exp * exp
              | PRINT of exp
@@ -24,6 +25,7 @@ fun toString NIL = "nil"
   | toString (APP (a, b)) = "(" ^ toString a ^ " " ^ toString b ^ ")"
   | toString (PLUS (a, b)) = "(+ " ^ toString a ^ " " ^ toString b ^ ")"
   | toString (MINUS (a, b)) = "(- " ^ toString a ^ " " ^ toString b ^ ")"
+  | toString (EQ (a, b)) = "(= " ^ toString a ^ " " ^ toString b ^ ")"
   | toString (LT (a, b)) = "(< " ^ toString a ^ " " ^ toString b ^ ")"
   | toString (LE (a, b)) = "(<= " ^ toString a ^ " " ^ toString b ^ ")"
   | toString (PRINT a) = "(print " ^ toString a ^ ")"
@@ -46,6 +48,7 @@ fun freeVars (bound, NIL) = StringSet.empty
   | freeVars (bound, APP (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
   | freeVars (bound, PLUS (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
   | freeVars (bound, MINUS (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
+  | freeVars (bound, EQ (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
   | freeVars (bound, LT (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
   | freeVars (bound, LE (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
   | freeVars (bound, PRINT a) = freeVars (bound, a)

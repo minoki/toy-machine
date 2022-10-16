@@ -88,6 +88,13 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                              (INT a, INT b) => run (insns, stack, push (stack, stackTop, INT (a - b)), frames, framesTop, base)
                            | _ => raise Fail "type error: -"
                       end
+        | OP_EQ => let val (stackTop, b) = pop (stack, stackTop)
+                       val (stackTop, a) = pop (stack, stackTop)
+                   in case (a, b) of
+                          (INT a, INT b) => run (insns, stack, push (stack, stackTop, BOOL (a = b)), frames, framesTop, base)
+                        | (BOOL a, BOOL b) => run (insns, stack, push (stack, stackTop, BOOL (a = b)), frames, framesTop, base)
+                        | _ => raise Fail "type error: ="
+                   end
         | OP_LT => let val (stackTop, b) = pop (stack, stackTop)
                        val (stackTop, a) = pop (stack, stackTop)
                    in case (a, b) of

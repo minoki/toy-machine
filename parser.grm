@@ -16,6 +16,7 @@
     | FALSE
     | PLUS
     | MINUS
+    | EQ
     | LT
     | LE
     | PRINT
@@ -50,6 +51,7 @@ exp : NIL (Syntax.NIL)
     | LPAREN IF exp exp exp RPAREN (Syntax.IF (exp1, exp2, exp3))
     | LPAREN PLUS exp exp RPAREN (Syntax.PLUS (exp1, exp2))
     | LPAREN MINUS exp exp RPAREN (Syntax.MINUS (exp1, exp2))
+    | LPAREN EQ exp exp RPAREN (Syntax.EQ (exp1, exp2))
     | LPAREN LT exp exp RPAREN (Syntax.LT (exp1, exp2))
     | LPAREN LE exp exp RPAREN (Syntax.LE (exp1, exp2))
     | LPAREN PRINT exp RPAREN (Syntax.PRINT exp)
