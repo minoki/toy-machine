@@ -17,37 +17,37 @@
     | LE
     | PRINT
     | EOF
-%nonterm EXP of Syntax.exp
-       | BINDINGS of (string * Syntax.exp) list
-       | PROGRAM of Syntax.exp list
-       | START of Syntax.exp list
+%nonterm exp of Syntax.exp
+       | bindings of (string * Syntax.exp) list
+       | program of Syntax.exp list
+       | start of Syntax.exp list
 
 %name ToyLang
 
 %eop EOF
 %noshift EOF
-%start START
+%start start
 
 %%
 
-START : PROGRAM (PROGRAM)
+start : program (program)
 
-PROGRAM : ([])
-        | EXP PROGRAM (EXP :: PROGRAM)
+program : ([])
+        | exp program (exp :: program)
 
-EXP : NIL (Syntax.NIL)
+exp : NIL (Syntax.NIL)
     | INT (Syntax.INT INT)
     | NAME (Syntax.VAR NAME)
-    | LPAREN LAMBDA LPAREN NAME RPAREN EXP RPAREN (Syntax.LAMBDA (NAME, EXP))
-    | LPAREN LET LPAREN BINDINGS RPAREN EXP RPAREN (Syntax.LET (BINDINGS, EXP))
-    | LPAREN LET_STAR LPAREN BINDINGS RPAREN EXP RPAREN (List.foldr (fn (binding, exp) => Syntax.LET ([binding], exp)) EXP BINDINGS)
-    | LPAREN IF EXP EXP EXP RPAREN (Syntax.IF (EXP1, EXP2, EXP3))
-    | LPAREN PLUS EXP EXP RPAREN (Syntax.PLUS (EXP1, EXP2))
-    | LPAREN MINUS EXP EXP RPAREN (Syntax.MINUS (EXP1, EXP2))
-    | LPAREN LT EXP EXP RPAREN (Syntax.LT (EXP1, EXP2))
-    | LPAREN LE EXP EXP RPAREN (Syntax.LE (EXP1, EXP2))
-    | LPAREN PRINT EXP RPAREN (Syntax.PRINT EXP)
-    | LPAREN EXP EXP RPAREN (Syntax.APP (EXP1, EXP2))
+    | LPAREN LAMBDA LPAREN NAME RPAREN exp RPAREN (Syntax.LAMBDA (NAME, exp))
+    | LPAREN LET LPAREN bindings RPAREN exp RPAREN (Syntax.LET (bindings, exp))
+    | LPAREN LET_STAR LPAREN bindings RPAREN exp RPAREN (List.foldr (fn (binding, exp) => Syntax.LET ([binding], exp)) exp bindings)
+    | LPAREN IF exp exp exp RPAREN (Syntax.IF (exp1, exp2, exp3))
+    | LPAREN PLUS exp exp RPAREN (Syntax.PLUS (exp1, exp2))
+    | LPAREN MINUS exp exp RPAREN (Syntax.MINUS (exp1, exp2))
+    | LPAREN LT exp exp RPAREN (Syntax.LT (exp1, exp2))
+    | LPAREN LE exp exp RPAREN (Syntax.LE (exp1, exp2))
+    | LPAREN PRINT exp RPAREN (Syntax.PRINT exp)
+    | LPAREN exp exp RPAREN (Syntax.APP (exp1, exp2))
 
-BINDINGS : ([])
-         | LPAREN NAME EXP RPAREN BINDINGS ((NAME, EXP) :: BINDINGS)
+bindings : ([])
+         | LPAREN NAME exp RPAREN bindings ((NAME, exp) :: bindings)
