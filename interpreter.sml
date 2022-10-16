@@ -44,6 +44,14 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                             CLOSURE (insns', _) => run (insns', stack, stackTop, frames, framesTop + 1, stackTop - 2)
                           | _ => raise Fail "type error: expected function"
                      end
+        | OP_TAILCALL => let val arg = Array.sub (stack, stackTop - 1)
+                             val func = Array.sub (stack, stackTop - 2)
+                         in Array.update (stack, base + 1, arg)
+                          ; Array.update (stack, base, func)
+                          ; case func of
+                                CLOSURE (insns', _) => run (insns', stack, base + 2, frames, framesTop, base)
+                              | _ => raise Fail "type error: expected function"
+                         end
         | OP_RETURN => let val frame = Array.sub (frames, framesTop - 1)
                            val (_, result) = pop (stack, stackTop)
                        in Array.update (stack, base, result)

@@ -6,6 +6,7 @@ datatype instruction = OP_POP
                      | OP_PUSH_LOCAL of int
                      | OP_PUSH_FREE of int
                      | OP_CALL
+                     | OP_TAILCALL
                      | OP_RETURN
                      | OP_CLOSURE of { body : instruction list, nFreeVars : int }
                      | OP_JUMP_IF_FALSE of int
@@ -22,6 +23,7 @@ fun toString OP_POP = "OP_POP"
   | toString (OP_PUSH_LOCAL n) = "OP_PUSH_LOCAL(" ^ Int.toString n ^ ")"
   | toString (OP_PUSH_FREE n) = "OP_PUSH_FREE(" ^ Int.toString n ^ ")"
   | toString OP_CALL = "OP_CALL"
+  | toString OP_TAILCALL = "OP_TAILCALL"
   | toString OP_RETURN = "OP_RETURN"
   | toString (OP_CLOSURE { body, nFreeVars }) = "OP_CLOSURE[" ^ String.concatWith ";" (map toString body) ^ "](" ^ Int.toString nFreeVars ^ ")"
   | toString (OP_JUMP_IF_FALSE offset) = "OP_JUMP_IF_FALSE(" ^ Int.toString offset ^ ")"
