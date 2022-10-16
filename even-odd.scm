@@ -1,0 +1,7 @@
+(letrec ((even? (lambda (n) (if (= n 0) #t (odd? (- n 1)))))
+         (odd? (lambda (n) (if (= n 0) #f (even? (- n 1))))))
+  (let ((a (print (even? 100)))
+        (b (print (even? 101)))
+        (c (print (even? 1000)))
+        (d (print (even? 1001))))
+        #t))
