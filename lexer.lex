@@ -32,6 +32,8 @@ alnum = [a-zA-Z0-9];
 "-" => (Tokens.MINUS (0, 0));
 "<" => (Tokens.LT (0, 0));
 "<=" => (Tokens.LE (0, 0));
+"#t" => (Tokens.TRUE (0, 0));
+"#f" => (Tokens.FALSE (0, 0));
 {digit}+ => (Tokens.INT (CharVector.foldl (fn (a,r) => ord a - ord #"0" + 10 * r) 0 yytext, 0, 0));
 {alpha}({alnum}|_|\-|\*)* => (Tokens.NAME (yytext, 0, 0));
 . => (error ("toylang: ignoring bad character " ^ yytext); lex ());

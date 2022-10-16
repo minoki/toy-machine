@@ -31,6 +31,8 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                                   ; run (insns, stack, stackTop - n + 1, frames, framesTop, base)
                                  end
         | OP_PUSH_NIL => run (insns, stack, push (stack, stackTop, NIL), frames, framesTop, base)
+        | OP_PUSH_FALSE => run (insns, stack, push (stack, stackTop, BOOL false), frames, framesTop, base)
+        | OP_PUSH_TRUE => run (insns, stack, push (stack, stackTop, BOOL true), frames, framesTop, base)
         | OP_PUSH_INT n => run (insns, stack, push (stack, stackTop, INT n), frames, framesTop, base)
         | OP_PUSH_LOCAL i => run (insns, stack, push (stack, stackTop, Array.sub (stack, base + i)), frames, framesTop, base)
         | OP_PUSH_FREE i => let val currentClosure = Array.sub (stack, base)

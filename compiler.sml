@@ -16,6 +16,7 @@ fun getVar (env, name) = (case StringMap.find (env, name) of
 (* compileExp : env * int * bool * Syntax.exp -> Instruction.instruction list *)
 fun compileExp (env, top, isTail, NIL) = [OP_PUSH_NIL]
   | compileExp (env, top, isTail, INT n) = [OP_PUSH_INT n]
+  | compileExp (env, top, isTail, BOOL b) = [if b then OP_PUSH_TRUE else OP_PUSH_FALSE]
   | compileExp (env, top, isTail, VAR name) = getVar (env, name)
   | compileExp (env, top, isTail, f as LAMBDA (name, body)) = #2 (compileLambda (env, f))
   | compileExp (env, top, isTail, LET (bindings, body))

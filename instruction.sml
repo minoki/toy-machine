@@ -2,6 +2,8 @@ structure Instruction = struct
 datatype instruction = OP_POP
                      | OP_POP_EXCEPT_TOP of int
                      | OP_PUSH_NIL
+                     | OP_PUSH_FALSE
+                     | OP_PUSH_TRUE
                      | OP_PUSH_INT of int
                      | OP_PUSH_LOCAL of int
                      | OP_PUSH_FREE of int
@@ -20,6 +22,8 @@ datatype instruction = OP_POP
 fun toString OP_POP = "OP_POP"
   | toString (OP_POP_EXCEPT_TOP n) = "OP_POP_EXCEPT_TOP(" ^ Int.toString n ^ ")"
   | toString OP_PUSH_NIL = "OP_PUSH_NIL"
+  | toString OP_PUSH_FALSE = "OP_PUSH_FALSE"
+  | toString OP_PUSH_TRUE = "OP_PUSH_TRUE"
   | toString (OP_PUSH_INT n) = "OP_PUSH_INT(" ^ Int.toString n ^ ")"
   | toString (OP_PUSH_LOCAL n) = "OP_PUSH_LOCAL(" ^ Int.toString n ^ ")"
   | toString (OP_PUSH_FREE n) = "OP_PUSH_FREE(" ^ Int.toString n ^ ")"

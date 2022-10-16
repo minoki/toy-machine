@@ -1,6 +1,7 @@
 structure Syntax = struct
 datatype exp = NIL
              | INT of int
+             | BOOL of bool
              | VAR of string
              | LAMBDA of string * exp
              | LET of (string * exp) list * exp
@@ -14,6 +15,7 @@ datatype exp = NIL
              | PRINT of exp
 fun toString NIL = "nil"
   | toString (INT n) = Int.toString n
+  | toString (BOOL n) = Bool.toString n
   | toString (VAR name) = name
   | toString (LAMBDA (name, body)) = "(lambda (" ^ name ^ ") " ^ toString body ^ ")"
   | toString (LET (bindings, body)) = "(let (" ^ String.concatWith " " (List.map (fn (name, exp) => "(" ^ name ^ " " ^ toString exp ^ ")") bindings) ^ ") " ^ toString body ^ ")"
@@ -29,6 +31,7 @@ structure StringSet = RedBlackSetFn (open String; type ord_key = string)
 (* freeVars : StringSet.set * exp -> StringSet.set *)
 fun freeVars (bound, NIL) = StringSet.empty
   | freeVars (bound, INT _) = StringSet.empty
+  | freeVars (bound, BOOL _) = StringSet.empty
   | freeVars (bound, VAR name) = if StringSet.member (bound, name)
                                  then StringSet.empty
                                  else StringSet.singleton name

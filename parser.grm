@@ -12,6 +12,8 @@
     | LET_STAR
     | LETREC
     | IF
+    | TRUE
+    | FALSE
     | PLUS
     | MINUS
     | LT
@@ -39,6 +41,8 @@ program : ([])
 exp : NIL (Syntax.NIL)
     | INT (Syntax.INT INT)
     | NAME (Syntax.VAR NAME)
+    | TRUE (Syntax.BOOL true)
+    | FALSE (Syntax.BOOL false)
     | LPAREN LAMBDA LPAREN NAME RPAREN exp RPAREN (Syntax.LAMBDA (NAME, exp))
     | LPAREN LET LPAREN bindings RPAREN exp RPAREN (Syntax.LET (bindings, exp))
     | LPAREN LET_STAR LPAREN bindings RPAREN exp RPAREN (List.foldr (fn (binding, exp) => Syntax.LET ([binding], exp)) exp bindings)
