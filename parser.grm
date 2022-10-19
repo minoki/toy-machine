@@ -20,6 +20,11 @@
     | LT
     | LE
     | PRINT
+    | NEW_PROMPT
+    | PUSH_PROMPT
+    | WITH_SUBCONT
+    | PUSH_SUBCONT
+    | ABORT
     | EOF
 %nonterm exp of Syntax.exp
        | bindings of (string * Syntax.exp) list
@@ -56,6 +61,11 @@ exp : NIL (Syntax.NIL)
     | LPAREN LE exp exp RPAREN (Syntax.LE (exp1, exp2))
     | LPAREN PRINT exp RPAREN (Syntax.PRINT exp)
     | LPAREN exp exp RPAREN (Syntax.APP (exp1, exp2))
+    | LPAREN NEW_PROMPT RPAREN (Syntax.NEW_PROMPT)
+    | LPAREN PUSH_PROMPT exp exp RPAREN (Syntax.PUSH_PROMPT (exp1, exp2))
+    | LPAREN WITH_SUBCONT exp exp RPAREN (Syntax.WITH_SUBCONT (exp1, exp2))
+    | LPAREN PUSH_SUBCONT exp exp RPAREN (Syntax.PUSH_SUBCONT (exp1, exp2))
+    | LPAREN ABORT exp exp RPAREN (Syntax.ABORT (exp1, exp2))
 
 bindings : ([])
          | LPAREN NAME exp RPAREN bindings ((NAME, exp) :: bindings)

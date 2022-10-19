@@ -1,11 +1,17 @@
 structure Interpreter = struct
+type prompt = unit ref
+datatype frame = CALL_FRAME of { base : int
+                               , return : Instruction.instruction list
+                               }
+               | CONT_MARKER of { prompt : prompt, stackPos : int }
+               | DUMMY_FRAME
 datatype value = NIL
                | BOOL of bool
                | INT of int
                | CLOSURE of Instruction.instruction list * value array
-type frame = { base : int
-             , return : Instruction.instruction list
-             }
+               | PROMPT of prompt
+               | SUBCONT of value vector * frame vector
+       | BOGUS
 type frames = frame array
 type stack = value array
 local open Instruction
@@ -13,21 +19,26 @@ local open Instruction
                                               raise Fail "stack overflow"
                                           else
                                               (Array.update (stack, stackTop, value); stackTop + 1)
-      fun pop (stack, stackTop) = let val stackTop = stackTop - 1
-                                  in (stackTop, Array.sub (stack, stackTop))
-                                  end
+      fun pop (stack, stackTop) = if stackTop = 0
+                                  then raise Fail "stack underflow"
+                                  else let val stackTop = stackTop - 1
+                                           val v = Array.sub (stack, stackTop)
+                                       in Array.update (stack, stackTop, BOGUS)
+                                        ; (stackTop, v)
+                                       end
 in
-fun newFrames () = Array.array (100, { base = ~100, return = [] })
-fun newStack () = Array.array (100, NIL)
+fun newFrames () = Array.array (100, DUMMY_FRAME)
+fun newStack () = Array.array (100, BOGUS)
 (* run : Instruction.instruction list * stack * int * frames * int * int -> unit *)
 fun run ([], stack, stackTop, frames, framesTop, base) = ()
   | run (insn :: insns, stack, stackTop, frames, framesTop, base)
     = case insn of
-          OP_POP => if stackTop = 0
-                    then raise Fail "stack underflow"
-                    else run (insns, stack, stackTop - 1, frames, framesTop, base)
+          OP_POP => let val (stackTop, _) = pop (stack, stackTop)
+                    in run (insns, stack, stackTop, frames, framesTop, base)
+                    end
         | OP_POP_EXCEPT_TOP n => let val (stackTop, top) = pop (stack, stackTop)
-                                 in Array.update (stack, stackTop - n, top)
+                                 in ArraySlice.modify (fn _ => BOGUS) (ArraySlice.slice (stack, stackTop - n, SOME n))
+                                  ; Array.update (stack, stackTop - n, top)
                                   ; run (insns, stack, stackTop - n + 1, frames, framesTop, base)
                                  end
         | OP_PUSH_NIL => run (insns, stack, push (stack, stackTop, NIL), frames, framesTop, base)
@@ -40,7 +51,7 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                                    CLOSURE (_, free) => run (insns, stack, push (stack, stackTop, Array.sub (free, i)), frames, framesTop, base)
                                  | _ => raise Fail "type error"
                             end
-        | OP_CALL => let val newFrame = { base = base, return = insns }
+        | OP_CALL => let val newFrame = CALL_FRAME { base = base, return = insns }
                      in Array.update (frames, framesTop, newFrame)
                       ; case Array.sub (stack, stackTop - 2) of
                             CLOSURE (insns', _) => run (insns', stack, stackTop, frames, framesTop + 1, stackTop - 2)
@@ -54,10 +65,13 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                                 CLOSURE (insns', _) => run (insns', stack, base + 2, frames, framesTop, base)
                               | _ => raise Fail "type error: expected function"
                          end
-        | OP_RETURN => let val frame = Array.sub (frames, framesTop - 1)
-                           val (_, result) = pop (stack, stackTop)
+        | OP_RETURN => let val (_, result) = pop (stack, stackTop)
+                           fun loop framesTop = case Array.sub (frames, framesTop - 1) of
+                                                    CALL_FRAME { base = base', return } => run (return, stack, base + 1, frames, framesTop - 1, base')
+                                                  | CONT_MARKER _ => loop (framesTop - 1)
+                                                  | _ => raise Fail "invalid frame"
                        in Array.update (stack, base, result)
-                        ; run (#return frame, stack, base + 1, frames, framesTop - 1, #base frame)
+                        ; loop framesTop
                        end
         | OP_CLOSURE { body, nFreeVars } => let val freeVars = Array.tabulate (nFreeVars, fn i => Array.sub (stack, stackTop - nFreeVars + i))
                                             in run (insns, stack, push (stack, stackTop - nFreeVars, CLOSURE (body, freeVars)), frames, framesTop, base)
@@ -113,7 +127,94 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                            | BOOL b => print (Bool.toString b ^ "\n")
                            | INT n => print (Int.toString n ^ "\n")
                            | CLOSURE _ => print "<function>\n"
+                           | PROMPT _ => print "<prompt>\n"
+                           | SUBCONT _ => print "<subcont>\n"
+                           | BOGUS => print "<bogus>\n"
                        ; run (insns, stack, push (stack, stackTop, NIL), frames, framesTop, base)
+                      end
+        | OP_NEW_PROMPT => run (insns, stack, push (stack, stackTop, PROMPT (ref ())), frames, framesTop, base)
+        | OP_PUSH_PROMPT => let val (stackTop, b) = pop (stack, stackTop)
+                                val (stackTop, a) = pop (stack, stackTop)
+                            in case (a, b) of
+                                   (PROMPT p, CLOSURE (insns', _)) =>
+                                   ( Array.update (frames, framesTop, CALL_FRAME { base = base, return = insns })
+                                   ; Array.update (frames, framesTop + 1, CONT_MARKER { prompt = p, stackPos = stackTop })
+                                   ; let val stackTop = push (stack, stackTop, b)
+                                         val stackTop = push (stack, stackTop, NIL)
+                                     in run (insns', stack, stackTop, frames, framesTop + 2, stackTop - 2)
+                                     end
+                                   )
+                                 | _ => raise Fail "type error: push-prompt"
+                            end
+        | OP_WITH_SUBCONT => let val (stackTop, b) = pop (stack, stackTop)
+                                 val (stackTop, a) = pop (stack, stackTop)
+                             in case (a, b) of
+                                    (PROMPT p, CLOSURE (insns', _)) =>
+                                    let fun lookup i = if i < 0 then
+                                                           NONE
+                                                       else
+                                                           (* TODO: This is slow *)
+                                                           case Array.sub (frames, i) of
+                                                               CONT_MARKER { prompt = q, stackPos = s } =>
+                                                               if p = q then
+                                                                   SOME (i, s)
+                                                               else
+                                                                   lookup (i - 1)
+                                                             | _ => lookup (i - 1)
+                                    in case lookup (framesTop - 1) of
+                                           SOME (i, s) => let val () = Array.update (frames, framesTop, CALL_FRAME { base = base, return = insns })
+                                                              val frameSlice = ArraySlice.vector (ArraySlice.slice (frames, i, SOME (framesTop + 1 - i)))
+                                                              val frameSlice = Vector.map (fn CALL_FRAME { base, return } => CALL_FRAME { base = base - s, return = return }
+                                                                                          | f => f
+                                                                                          ) frameSlice
+                                                              val stackSlice = ArraySlice.vector (ArraySlice.slice (stack, s, SOME (stackTop - s)))
+                                                              val stackTop = push (stack, s, b)
+                                                              val stackTop = push (stack, stackTop, SUBCONT (stackSlice, frameSlice))
+                                                          in run (insns', stack, stackTop, frames, i, stackTop - 2)
+                                                          end
+                                         | NONE => raise Fail "with-subcont: prompt not found"
+                                    end
+                                  | _ => raise Fail "type error: with-subcont"
+                             end
+        | OP_PUSH_SUBCONT => let val (stackTop, b) = pop (stack, stackTop)
+                                 val (stackTop, a) = pop (stack, stackTop)
+                             in case (a, b) of
+                                    (SUBCONT (stackSlice, frameSlice), CLOSURE (insns', _)) =>
+                                    let val () = Array.update (frames, framesTop, CALL_FRAME { base = base, return = insns })
+                                        val frameSlice = Vector.map (fn CALL_FRAME { base, return } => CALL_FRAME { base = base + stackTop, return = return }
+                                                                    | f => f
+                                                                    ) frameSlice
+                                        val () = Array.copyVec { src = frameSlice, dst = frames, di = framesTop + 1 }
+                                        val framesTop = framesTop + 1 + Vector.length frameSlice
+                                        val () = Array.copyVec { src = stackSlice, dst = stack, di = stackTop }
+                                        val stackTop = stackTop + Vector.length stackSlice
+                                        val stackTop = push (stack, stackTop, b)
+                                        val stackTop = push (stack, stackTop, NIL)
+                                    in run (insns', stack, stackTop, frames, framesTop, stackTop - 2)
+                                    end
+                                  | _ => raise Fail "type error: push-subcont"
+                             end
+        | OP_ABORT => let val (stackTop, b) = pop (stack, stackTop)
+                          val (stackTop, a) = pop (stack, stackTop)
+                      in case a of
+                             PROMPT p =>
+                             let fun lookup i = if i < 0 then
+                                                    NONE
+                                                else
+                                                    case Array.sub (frames, i) of
+                                                        CONT_MARKER { prompt = q, stackPos = s } =>
+                                                        if p = q then
+                                                            SOME (i, s)
+                                                        else
+                                                            lookup (i - 1)
+                                                      | _ => lookup (i - 1)
+                             in case lookup (framesTop - 1) of
+                                    SOME (i, s) => let val stackTop = push (stack, s, b)
+                                                   in run ([OP_RETURN], stack, stackTop, frames, i, stackTop)
+                                                   end
+                                  | NONE => raise Fail "with-subcont: prompt not found"
+                             end
+                           | _ => raise Fail "type error: abort"
                       end
 fun runProgram insns = let val stack = newStack ()
                        in run (insns, stack, 0, newFrames (), 0, 0)

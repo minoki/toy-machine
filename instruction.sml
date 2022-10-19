@@ -20,6 +20,11 @@ datatype instruction = OP_POP
                      | OP_LT
                      | OP_LE
                      | OP_PRINT
+                     | OP_NEW_PROMPT
+                     | OP_PUSH_PROMPT
+                     | OP_WITH_SUBCONT
+                     | OP_PUSH_SUBCONT
+                     | OP_ABORT
 fun toString OP_POP = "OP_POP"
   | toString (OP_POP_EXCEPT_TOP n) = "OP_POP_EXCEPT_TOP(" ^ Int.toString n ^ ")"
   | toString OP_PUSH_NIL = "OP_PUSH_NIL"
@@ -41,4 +46,9 @@ fun toString OP_POP = "OP_POP"
   | toString OP_LT = "OP_LT"
   | toString OP_LE = "OP_LE"
   | toString OP_PRINT = "OP_PRINT"
+  | toString OP_NEW_PROMPT = "OP_NEW_PROMPT"
+  | toString OP_PUSH_PROMPT = "OP_PUSH_PROMPT"
+  | toString OP_WITH_SUBCONT = "OP_WITH_SUBCONT"
+  | toString OP_PUSH_SUBCONT = "OP_PUSH_SUBCONT"
+  | toString OP_ABORT = "OP_ABORT"
 end;

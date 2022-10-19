@@ -14,6 +14,11 @@ datatype exp = NIL
              | LT of exp * exp
              | LE of exp * exp
              | PRINT of exp
+             | NEW_PROMPT
+             | PUSH_PROMPT of exp * exp
+             | WITH_SUBCONT of exp * exp
+             | PUSH_SUBCONT of exp * exp
+             | ABORT of exp * exp
 fun toString NIL = "nil"
   | toString (INT n) = Int.toString n
   | toString (BOOL n) = Bool.toString n
@@ -29,6 +34,11 @@ fun toString NIL = "nil"
   | toString (LT (a, b)) = "(< " ^ toString a ^ " " ^ toString b ^ ")"
   | toString (LE (a, b)) = "(<= " ^ toString a ^ " " ^ toString b ^ ")"
   | toString (PRINT a) = "(print " ^ toString a ^ ")"
+  | toString NEW_PROMPT = "(new-prompt)"
+  | toString (PUSH_PROMPT (a, b)) = "(push-prompt " ^ toString a ^ " " ^ toString b ^ ")"
+  | toString (WITH_SUBCONT (a, b)) = "(with-subcont " ^ toString a ^ " " ^ toString b ^ ")"
+  | toString (PUSH_SUBCONT (a, b)) = "(push-subcont " ^ toString a ^ " " ^ toString b ^ ")"
+  | toString (ABORT (a, b)) = "(abort " ^ toString a ^ " " ^ toString b ^ ")"
 structure StringSet = RedBlackSetFn (open String; type ord_key = string)
 (* freeVars : StringSet.set * exp -> StringSet.set *)
 fun freeVars (bound, NIL) = StringSet.empty
@@ -52,4 +62,9 @@ fun freeVars (bound, NIL) = StringSet.empty
   | freeVars (bound, LT (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
   | freeVars (bound, LE (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
   | freeVars (bound, PRINT a) = freeVars (bound, a)
+  | freeVars (bound, NEW_PROMPT) = StringSet.empty
+  | freeVars (bound, PUSH_PROMPT (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
+  | freeVars (bound, WITH_SUBCONT (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
+  | freeVars (bound, PUSH_SUBCONT (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
+  | freeVars (bound, ABORT (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
 end;

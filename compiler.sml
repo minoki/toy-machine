@@ -63,6 +63,11 @@ fun compileExp (env, top, isTail, NIL) = [OP_PUSH_NIL]
   | compileExp (env, top, isTail, LT (a, b)) = compileExp (env, top, false, a) @ compileExp (env, top + 1, false, b) @ [OP_LT]
   | compileExp (env, top, isTail, LE (a, b)) = compileExp (env, top, false, a) @ compileExp (env, top + 1, false, b) @ [OP_LE]
   | compileExp (env, top, isTail, PRINT a) = compileExp (env, top, false, a) @ [OP_PRINT]
+  | compileExp (env, top, isTail, NEW_PROMPT) = [OP_NEW_PROMPT]
+  | compileExp (env, top, isTail, PUSH_PROMPT (a, b)) = compileExp (env, top, false, a) @ compileExp (env, top + 1, false, b) @ [OP_PUSH_PROMPT]
+  | compileExp (env, top, isTail, WITH_SUBCONT (a, b)) = compileExp (env, top, false, a) @ compileExp (env, top + 1, false, b) @ [OP_WITH_SUBCONT]
+  | compileExp (env, top, isTail, PUSH_SUBCONT (a, b)) = compileExp (env, top, false, a) @ compileExp (env, top + 1, false, b) @ [OP_PUSH_SUBCONT]
+  | compileExp (env, top, isTail, ABORT (a, b)) = compileExp (env, top, false, a) @ compileExp (env, top + 1, false, b) @ [OP_ABORT]
 and compileLambda (env, f as LAMBDA (name, body))
     = let val (innerEnv, prepare, n) = StringSet.foldr (fn (name, (innerEnv, prepare, i)) =>
                                                            (StringMap.insert (innerEnv, name, FREE i), prepare @ getVar (env, name), i + 1)
