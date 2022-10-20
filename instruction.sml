@@ -16,6 +16,7 @@ datatype instruction = OP_POP
                      | OP_JUMP of int
                      | OP_PLUS
                      | OP_MINUS
+                     | OP_TIMES
                      | OP_EQ
                      | OP_LT
                      | OP_LE
@@ -42,6 +43,7 @@ fun toString OP_POP = "OP_POP"
   | toString (OP_JUMP offset) = "OP_JUMP(" ^ Int.toString offset ^ ")"
   | toString OP_PLUS = "OP_PLUS"
   | toString OP_MINUS = "OP_MINUS"
+  | toString OP_TIMES = "OP_TIMES"
   | toString OP_EQ = "OP_EQ"
   | toString OP_LT = "OP_LT"
   | toString OP_LE = "OP_LE"

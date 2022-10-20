@@ -13,6 +13,7 @@ fun parseExp (X.INT x) = S.INT x
   | parseExp (X.LIST [X.ID "if", cond, then_, else_]) = S.IF (parseExp cond, parseExp then_, parseExp else_)
   | parseExp (X.LIST [X.ID "+", a, b]) = S.PLUS (parseExp a, parseExp b)
   | parseExp (X.LIST [X.ID "-", a, b]) = S.MINUS (parseExp a, parseExp b)
+  | parseExp (X.LIST [X.ID "*", a, b]) = S.TIMES (parseExp a, parseExp b)
   | parseExp (X.LIST [X.ID "=", a, b]) = S.EQ (parseExp a, parseExp b)
   | parseExp (X.LIST [X.ID "<", a, b]) = S.LT (parseExp a, parseExp b)
   | parseExp (X.LIST [X.ID "<=", a, b]) = S.LE (parseExp a, parseExp b)

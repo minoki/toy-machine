@@ -15,6 +15,7 @@ Syntax:
         | (begin <exp>...)
         | (+ <exp> <exp>)
         | (- <exp> <exp>)
+        | (* <exp> <exp>)
         | (= <exp> <exp>)
         | (< <exp> <exp>)
         | (<= <exp> <exp>)
