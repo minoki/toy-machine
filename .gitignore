@@ -1,4 +1,4 @@
-lexer.lex.sml
-parser.grm.sig
-parser.grm.sml
+s-exp.lex.sml
+s-exp.grm.sig
+s-exp.grm.sml
 toylang

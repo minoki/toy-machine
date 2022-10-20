@@ -1,17 +1,18 @@
 all: toylang
 
-lexer.lex.sml: lexer.lex
+s-exp.lex.sml: s-exp.lex
 	mllex $<
 
-parser.grm.sml parser.grm.sig: parser.grm
+s-exp.grm.sml s-exp.grm.sig: s-exp.grm
 	mlyacc $<
 
 SOURCES = \
+  s-exp.grm.sig \
+  s-exp.lex.sml \
+  s-exp.grm.sml \
+  s-exp-parser.sml \
   syntax.sml \
-  parser.grm.sig \
-  lexer.lex.sml \
-  parser.grm.sml \
-  parser.sml \
+  parse-s-exp.sml \
   instruction.sml \
   compiler.sml \
   interpreter.sml \

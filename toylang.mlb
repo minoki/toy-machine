@@ -1,11 +1,13 @@
 $(SML_LIB)/basis/basis.mlb
 $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 $(SML_LIB)/mlyacc-lib/mlyacc-lib.mlb
+s-exp.sml
+s-exp.grm.sig
+s-exp.lex.sml
+s-exp.grm.sml
+s-exp-parser.sml
 syntax.sml
-parser.grm.sig
-lexer.lex.sml
-parser.grm.sml
-parser.sml
+parse-s-exp.sml
 instruction.sml
 compiler.sml
 interpreter.sml

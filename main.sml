@@ -9,11 +9,12 @@ val content = case CommandLine.arguments () of
                            | NONE => ""
                        );
 val lexer = let val i = ref 0
-            in ToyLangParser.makeLexer (fn _ => if !i = 0
-                                                then (i := 1; content)
-                                                else "")
+            in SExpParser.makeLexer (fn _ => if !i = 0
+                                             then (i := 1; content)
+                                             else "")
             end
-val (program, _) = ToyLangParser.parse (0, lexer, print_error, ());
+val (program, _) = SExpParser.parse (0, lexer, print_error, ());
+val program = ParseSExp.parseProgram program;
 List.app (fn exp => print (Syntax.toString exp ^ "\n")) program;
 print "---\n";
 val insns = Compiler.compileProgram program;

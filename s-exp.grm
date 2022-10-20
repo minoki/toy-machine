@@ -1,0 +1,39 @@
+%%
+
+%pos int
+
+%term INT of int
+    | ID of string
+    | STRING of string
+    | LPAREN
+    | RPAREN
+    | TRUE
+    | FALSE
+    | DOT
+    | QUOTE
+    | HASH_LPAREN
+    | EOF
+%nonterm exp of SExp.exp
+       | sequence of SExp.exp list
+       | start of SExp.exp list
+
+%name SExp
+
+%eop EOF
+%noshift EOF
+%start start
+
+%%
+
+start : sequence (sequence)
+
+exp : ID (SExp.ID ID)
+    | INT (SExp.INT INT)
+    | STRING (SExp.STRING STRING)
+    | FALSE (SExp.BOOL false)
+    | TRUE (SExp.BOOL true)
+    | LPAREN sequence RPAREN (SExp.LIST sequence)
+    | QUOTE exp (SExp.LIST [SExp.ID "quote", exp])
+
+sequence : ([])
+         | exp sequence (exp :: sequence)
