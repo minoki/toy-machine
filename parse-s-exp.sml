@@ -16,7 +16,7 @@ fun parseExp (X.INT x) = S.INT x
   | parseExp (X.LIST [X.ID "=", a, b]) = S.EQ (parseExp a, parseExp b)
   | parseExp (X.LIST [X.ID "<", a, b]) = S.LT (parseExp a, parseExp b)
   | parseExp (X.LIST [X.ID "<=", a, b]) = S.LE (parseExp a, parseExp b)
-  | parseExp (X.LIST [X.ID "print", a]) = S.PRINT (parseExp a)
+  | parseExp (X.LIST [X.ID "display", a]) = S.PRINT (parseExp a)
   | parseExp (X.LIST [X.ID "new-prompt"]) = S.NEW_PROMPT
   | parseExp (X.LIST [X.ID "push-prompt", a, b]) = S.PUSH_PROMPT (parseExp a, parseExp b)
   | parseExp (X.LIST [X.ID "with-subcont", a, b]) = S.WITH_SUBCONT (parseExp a, parseExp b)

@@ -17,7 +17,7 @@ Syntax:
         | (= <exp> <exp>)
         | (< <exp> <exp>)
         | (<= <exp> <exp>)
-        | (print <exp> <exp>)
+        | (display <exp>)
         | (new-prompt)
         | (push-prompt <exp> <exp>)  ; (push-prompt <prompt> (lambda (_) <body>))
         | (with-subcont <exp> <exp>) ; (with-subcont <prompt> (lambda (subcont) <body>))
