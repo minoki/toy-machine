@@ -68,6 +68,11 @@ fun compileExp (env, top, isTail, NIL) = [OP_PUSH_NIL]
   | compileExp (env, top, isTail, WITH_SUBCONT (a, b)) = compileExp (env, top, false, a) @ compileExp (env, top + 1, false, b) @ [OP_WITH_SUBCONT]
   | compileExp (env, top, isTail, PUSH_SUBCONT (a, b)) = compileExp (env, top, false, a) @ compileExp (env, top + 1, false, b) @ [OP_PUSH_SUBCONT]
   | compileExp (env, top, isTail, ABORT (a, b)) = compileExp (env, top, false, a) @ compileExp (env, top + 1, false, b) @ [OP_ABORT]
+  | compileExp (env, top, isTail, SEQUENCE xs) = let fun go [] = [OP_PUSH_NIL]
+                                                       | go [x] = compileExp (env, top, isTail, x)
+                                                       | go (x :: xs) = compileExp (env, top, false, x) @ OP_POP :: go xs
+                                                 in go xs
+                                                 end
 and compileLambda (env, f as LAMBDA (name, body))
     = let val (innerEnv, prepare, n) = StringSet.foldr (fn (name, (innerEnv, prepare, i)) =>
                                                            (StringMap.insert (innerEnv, name, FREE i), prepare @ getVar (env, name), i + 1)

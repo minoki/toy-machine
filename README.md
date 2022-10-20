@@ -6,12 +6,13 @@ Syntax:
         | #t
         | <integer>
         | <id>
-        | (lambda (<id>) <exp>)
+        | (lambda (<id>) <exp>...)
         | (<exp> <exp>)
-        | (let (<bindings>) <exp>)
-        | (let* (<bindings>) <exp>)
-        | (letrec (<bindings>) <exp>)
+        | (let (<bindings>) <exp>...)
+        | (let* (<bindings>) <exp>...)
+        | (letrec (<bindings>) <exp>...)
         | (if <exp> <exp> <exp>)
+        | (begin <exp>...)
         | (+ <exp> <exp>)
         | (- <exp> <exp>)
         | (= <exp> <exp>)

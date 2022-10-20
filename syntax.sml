@@ -19,6 +19,7 @@ datatype exp = NIL
              | WITH_SUBCONT of exp * exp
              | PUSH_SUBCONT of exp * exp
              | ABORT of exp * exp
+             | SEQUENCE of exp list
 fun toString NIL = "nil"
   | toString (INT n) = Int.toString n
   | toString (BOOL n) = Bool.toString n
@@ -39,6 +40,7 @@ fun toString NIL = "nil"
   | toString (WITH_SUBCONT (a, b)) = "(with-subcont " ^ toString a ^ " " ^ toString b ^ ")"
   | toString (PUSH_SUBCONT (a, b)) = "(push-subcont " ^ toString a ^ " " ^ toString b ^ ")"
   | toString (ABORT (a, b)) = "(abort " ^ toString a ^ " " ^ toString b ^ ")"
+  | toString (SEQUENCE xs) = "(begin " ^ String.concatWith " " (List.map toString xs) ^ ")"
 structure StringSet = RedBlackSetFn (open String; type ord_key = string)
 (* freeVars : StringSet.set * exp -> StringSet.set *)
 fun freeVars (bound, NIL) = StringSet.empty
@@ -67,4 +69,5 @@ fun freeVars (bound, NIL) = StringSet.empty
   | freeVars (bound, WITH_SUBCONT (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
   | freeVars (bound, PUSH_SUBCONT (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
   | freeVars (bound, ABORT (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
+  | freeVars (bound, SEQUENCE xs) = List.foldl (fn (x, s) => StringSet.union (freeVars (bound, x), s)) StringSet.empty xs
 end;
