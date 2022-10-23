@@ -24,6 +24,11 @@ fun parseExp (X.INT x) = S.INT x
   | parseExp (X.LIST [X.ID "push-subcont", a, b]) = S.PUSH_SUBCONT (parseExp a, parseExp b)
   | parseExp (X.LIST [X.ID "abort", a, b]) = S.ABORT (parseExp a, parseExp b)
   | parseExp (X.LIST (X.ID "begin" :: xs)) = parseSequence xs
+  | parseExp (X.LIST [X.ID "cons", a, b]) = S.CONS (parseExp a, parseExp b)
+  | parseExp (X.LIST (X.ID "list" :: xs)) = List.foldr (fn (a, d) => S.CONS (parseExp a, d)) S.NIL xs
+  | parseExp (X.LIST [X.ID "car", a]) = S.CAR (parseExp a)
+  | parseExp (X.LIST [X.ID "cdr", a]) = S.CDR (parseExp a)
+  | parseExp (X.LIST [X.ID "pair?", a]) = S.IS_PAIR (parseExp a)
   | parseExp (X.LIST [a, b]) = S.APP (parseExp a, parseExp b)
   | parseExp (X.ID x) = S.VAR x
   | parseExp x = raise Fail ("unparsed expression: " ^ SExp.toString x)

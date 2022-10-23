@@ -21,6 +21,10 @@ datatype exp = NIL
              | PUSH_SUBCONT of exp * exp
              | ABORT of exp * exp
              | SEQUENCE of exp list
+             | CONS of exp * exp
+             | CAR of exp
+             | CDR of exp
+             | IS_PAIR of exp
 fun toString NIL = "nil"
   | toString (INT n) = Int.toString n
   | toString (BOOL n) = Bool.toString n
@@ -43,6 +47,10 @@ fun toString NIL = "nil"
   | toString (PUSH_SUBCONT (a, b)) = "(push-subcont " ^ toString a ^ " " ^ toString b ^ ")"
   | toString (ABORT (a, b)) = "(abort " ^ toString a ^ " " ^ toString b ^ ")"
   | toString (SEQUENCE xs) = "(begin " ^ String.concatWith " " (List.map toString xs) ^ ")"
+  | toString (CONS (a, b)) = "(cons " ^ toString a ^ " " ^ toString b ^ ")"
+  | toString (CAR a) = "(car " ^ toString a ^ ")"
+  | toString (CDR a) = "(cdr " ^ toString a ^ ")"
+  | toString (IS_PAIR a) = "(pair? " ^ toString a ^ ")"
 structure StringSet = RedBlackSetFn (open String; type ord_key = string)
 (* freeVars : StringSet.set * exp -> StringSet.set *)
 fun freeVars (bound, NIL) = StringSet.empty
@@ -73,4 +81,8 @@ fun freeVars (bound, NIL) = StringSet.empty
   | freeVars (bound, PUSH_SUBCONT (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
   | freeVars (bound, ABORT (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
   | freeVars (bound, SEQUENCE xs) = List.foldl (fn (x, s) => StringSet.union (freeVars (bound, x), s)) StringSet.empty xs
+  | freeVars (bound, CONS (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
+  | freeVars (bound, CAR a) = freeVars (bound, a)
+  | freeVars (bound, CDR a) = freeVars (bound, a)
+  | freeVars (bound, IS_PAIR a) = freeVars (bound, a)
 end;

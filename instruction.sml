@@ -26,6 +26,10 @@ datatype instruction = OP_POP
                      | OP_WITH_SUBCONT
                      | OP_PUSH_SUBCONT
                      | OP_ABORT
+                     | OP_CONS
+                     | OP_CAR
+                     | OP_CDR
+                     | OP_IS_PAIR
 fun toString OP_POP = "OP_POP"
   | toString (OP_POP_EXCEPT_TOP n) = "OP_POP_EXCEPT_TOP(" ^ Int.toString n ^ ")"
   | toString OP_PUSH_NIL = "OP_PUSH_NIL"
@@ -53,4 +57,8 @@ fun toString OP_POP = "OP_POP"
   | toString OP_WITH_SUBCONT = "OP_WITH_SUBCONT"
   | toString OP_PUSH_SUBCONT = "OP_PUSH_SUBCONT"
   | toString OP_ABORT = "OP_ABORT"
+  | toString OP_CONS = "OP_CONS"
+  | toString OP_CAR = "OP_CAR"
+  | toString OP_CDR = "OP_CDR"
+  | toString OP_IS_PAIR = "OP_IS_PAIR"
 end;

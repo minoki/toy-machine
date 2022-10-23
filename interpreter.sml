@@ -11,7 +11,26 @@ datatype value = NIL
                | CLOSURE of Instruction.instruction list * value array
                | PROMPT of prompt
                | SUBCONT of value vector * frame vector
-       | BOGUS
+               | CONS of value * value
+               | BOGUS
+fun valueToString NIL = "()"
+  | valueToString (BOOL false) = "#f"
+  | valueToString (BOOL true) = "#t"
+  | valueToString (INT n) = if n < 0 then
+                                "-" ^ String.extract (Int.toString n, 1, NONE)
+                            else
+                                Int.toString n
+  | valueToString (CLOSURE _) = "<closure>"
+  | valueToString (PROMPT _) = "<prompt>"
+  | valueToString (SUBCONT _) = "<subcont>"
+  | valueToString (x as CONS _) = (case tryToList (x, []) of
+                                       (xs, NONE) => "(" ^ String.concatWith " " (List.map valueToString xs) ^ ")"
+                                     | (xs, SOME y) => "(" ^ String.concatWith " " (List.map valueToString xs) ^ " . " ^ valueToString y ^ ")"
+                                  )
+  | valueToString BOGUS = "<bogus>"
+and tryToList (NIL, acc) = (List.rev acc, NONE)
+  | tryToList (CONS (a, b), acc) = tryToList (b, a :: acc)
+  | tryToList (x, acc) = (List.rev acc, SOME x)
 type frames = frame array
 type stack = value array
 local open Instruction
@@ -113,6 +132,7 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                    in case (a, b) of
                           (INT a, INT b) => run (insns, stack, push (stack, stackTop, BOOL (a = b)), frames, framesTop, base)
                         | (BOOL a, BOOL b) => run (insns, stack, push (stack, stackTop, BOOL (a = b)), frames, framesTop, base)
+                        | (NIL, NIL) => run (insns, stack, push (stack, stackTop, BOOL true), frames, framesTop, base)
                         | _ => raise Fail "type error: ="
                    end
         | OP_LT => let val (stackTop, b) = pop (stack, stackTop)
@@ -128,14 +148,7 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                         | _ => raise Fail "type error: <="
                    end
         | OP_PRINT => let val (stackTop, a) = pop (stack, stackTop)
-                      in case a of
-                             NIL => print "nil\n"
-                           | BOOL b => print (Bool.toString b ^ "\n")
-                           | INT n => print (Int.toString n ^ "\n")
-                           | CLOSURE _ => print "<function>\n"
-                           | PROMPT _ => print "<prompt>\n"
-                           | SUBCONT _ => print "<subcont>\n"
-                           | BOGUS => print "<bogus>\n"
+                      in print (valueToString a ^ "\n")
                        ; run (insns, stack, push (stack, stackTop, NIL), frames, framesTop, base)
                       end
         | OP_NEW_PROMPT => run (insns, stack, push (stack, stackTop, PROMPT (ref ())), frames, framesTop, base)
@@ -222,6 +235,23 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                              end
                            | _ => raise Fail "type error: abort"
                       end
+        | OP_CONS => let val (stackTop, b) = pop (stack, stackTop)
+                         val (stackTop, a) = pop (stack, stackTop)
+                     in run (insns, stack, push (stack, stackTop, CONS (a, b)), frames, framesTop, base)
+                     end
+        | OP_CAR => let val (stackTop, a) = pop (stack, stackTop)
+                    in case a of
+                           CONS (car, cdr) => run (insns, stack, push (stack, stackTop, car), frames, framesTop, base)
+                         | _ => raise Fail "type error: car"
+                    end
+        | OP_CDR => let val (stackTop, a) = pop (stack, stackTop)
+                    in case a of
+                           CONS (car, cdr) => run (insns, stack, push (stack, stackTop, cdr), frames, framesTop, base)
+                         | _ => raise Fail "type error: cdr"
+                    end
+        | OP_IS_PAIR => let val (stackTop, a) = pop (stack, stackTop)
+                        in run (insns, stack, push (stack, stackTop, BOOL (case a of CONS _ => true | _ => false)), frames, framesTop, base)
+                        end
 fun runProgram insns = let val stack = newStack ()
                        in run (insns, stack, 0, newFrames (), 0, 0)
                        end

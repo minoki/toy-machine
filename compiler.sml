@@ -74,6 +74,10 @@ fun compileExp (env, top, isTail, NIL) = [OP_PUSH_NIL]
                                                        | go (x :: xs) = compileExp (env, top, false, x) @ OP_POP :: go xs
                                                  in go xs
                                                  end
+  | compileExp (env, top, isTail, CONS (a, b)) = compileExp (env, top, false, a) @ compileExp (env, top + 1, false, b) @ [OP_CONS]
+  | compileExp (env, top, isTail, CAR a) = compileExp (env, top, false, a) @ [OP_CAR]
+  | compileExp (env, top, isTail, CDR a) = compileExp (env, top, false, a) @ [OP_CDR]
+  | compileExp (env, top, isTail, IS_PAIR a) = compileExp (env, top, false, a) @ [OP_IS_PAIR]
 and compileLambda (env, f as LAMBDA (name, body))
     = let val (innerEnv, prepare, n) = StringSet.foldr (fn (name, (innerEnv, prepare, i)) =>
                                                            (StringMap.insert (innerEnv, name, FREE i), prepare @ getVar (env, name), i + 1)
