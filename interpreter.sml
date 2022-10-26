@@ -37,14 +37,18 @@ local open Instruction
       fun push (stack, stackTop, value) = if stackTop >= Array.length stack then
                                               raise Fail "stack overflow"
                                           else
-                                              (Array.update (stack, stackTop, value); stackTop + 1)
+                                              case value of
+                                                  BOGUS => raise Fail "attempt to push <bogus>"
+                                                | _ => (Array.update (stack, stackTop, value); stackTop + 1)
       fun pop (stack, stackTop) = if stackTop = 0
                                   then raise Fail "stack underflow"
                                   else let val stackTop = stackTop - 1
-                                           val v = Array.sub (stack, stackTop)
-                                       in Array.update (stack, stackTop, BOGUS)
-                                        ; (stackTop, v)
+                                       in (stackTop, Array.sub (stack, stackTop)) before Array.update (stack, stackTop, BOGUS)
                                        end
+      fun dumpStack (stack, 0) = print "stack: empty\n"
+        | dumpStack (stack, stackTop) = ArraySlice.appi (fn (i, x) => print ("stack #" ^ Int.toString i ^ ": " ^ valueToString x ^ "\n")) (ArraySlice.slice (stack, 0, SOME stackTop))
+      fun dumpFrames (frames, 0) = print "frame: empty\n"
+        | dumpFrames (frames, framesTop) = ArraySlice.appi (fn (i, x) => print ("frame #" ^ Int.toString i ^ ": " ^ (case x of CALL_FRAME { base, return } => "CALL_FRAME " ^ Int.toString base | CONT_MARKER { prompt, stackPos } => "CONT_MARKER " ^ Int.toString stackPos | DUMMY_FRAME => "DUMMY_FRAME") ^ "\n")) (ArraySlice.slice (frames, 0, SOME framesTop))
 in
 fun newFrames () = Array.array (100, DUMMY_FRAME)
 fun newStack () = Array.array (100, BOGUS)
@@ -74,18 +78,20 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                      in Array.update (frames, framesTop, newFrame)
                       ; case Array.sub (stack, stackTop - 2) of
                             CLOSURE (insns', _) => run (insns', stack, stackTop, frames, framesTop + 1, stackTop - 2)
-                          | _ => raise Fail "type error: expected function"
+                          | x => raise Fail ("type error: expected function, but got " ^ valueToString x)
                      end
         | OP_TAILCALL => let val arg = Array.sub (stack, stackTop - 1)
                              val func = Array.sub (stack, stackTop - 2)
                          in Array.update (stack, base + 1, arg)
                           ; Array.update (stack, base, func)
+                          ; ArraySlice.modify (fn _ => BOGUS) (ArraySlice.slice (stack, base + 2, SOME (stackTop - (base + 2))))
                           ; case func of
                                 CLOSURE (insns', _) => run (insns', stack, base + 2, frames, framesTop, base)
                               | _ => raise Fail "type error: expected function"
                          end
-        | OP_RETURN => let val (_, result) = pop (stack, stackTop)
-                           fun loop framesTop = case Array.sub (frames, framesTop - 1) of
+        | OP_RETURN => let val (stackTop, result) = pop (stack, stackTop)
+                           val () = ArraySlice.modify (fn _ => BOGUS) (ArraySlice.slice (stack, base, SOME (stackTop - base)))
+                           fun loop framesTop = case Array.sub (frames, framesTop - 1) before Array.update (frames, framesTop - 1, DUMMY_FRAME) of
                                                     CALL_FRAME { base = base', return } => run (return, stack, base + 1, frames, framesTop - 1, base')
                                                   | CONT_MARKER _ => loop (framesTop - 1)
                                                   | _ => raise Fail "invalid frame"
@@ -182,12 +188,16 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                                                              | _ => lookup (i - 1)
                                     in case lookup (framesTop - 1) of
                                            SOME (i, s) => let val () = Array.update (frames, framesTop, CALL_FRAME { base = base, return = insns })
-                                                              val frameSlice = ArraySlice.vector (ArraySlice.slice (frames, i, SOME (framesTop + 1 - i)))
+                                                              val frameSlice = let val slice = ArraySlice.slice (frames, i, SOME (framesTop + 1 - i))
+                                                                               in ArraySlice.vector slice before ArraySlice.modify (fn _ => DUMMY_FRAME) slice
+                                                                               end
                                                               val frameSlice = Vector.map (fn CALL_FRAME { base, return } => CALL_FRAME { base = base - s, return = return }
                                                                                           | CONT_MARKER { prompt, stackPos } => CONT_MARKER { prompt = prompt, stackPos = stackPos - s }
                                                                                           | DUMMY_FRAME => DUMMY_FRAME
                                                                                           ) frameSlice
-                                                              val stackSlice = ArraySlice.vector (ArraySlice.slice (stack, s, SOME (stackTop - s)))
+                                                              val stackSlice = let val slice = ArraySlice.slice (stack, s, SOME (stackTop - s))
+                                                                               in ArraySlice.vector slice before ArraySlice.modify (fn _ => BOGUS) slice
+                                                                               end
                                                               val stackTop = push (stack, s, b)
                                                               val stackTop = push (stack, stackTop, SUBCONT (stackSlice, frameSlice))
                                                           in run (insns', stack, stackTop, frames, i, stackTop - 2)
