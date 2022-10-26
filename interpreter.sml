@@ -184,7 +184,8 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                                            SOME (i, s) => let val () = Array.update (frames, framesTop, CALL_FRAME { base = base, return = insns })
                                                               val frameSlice = ArraySlice.vector (ArraySlice.slice (frames, i, SOME (framesTop + 1 - i)))
                                                               val frameSlice = Vector.map (fn CALL_FRAME { base, return } => CALL_FRAME { base = base - s, return = return }
-                                                                                          | f => f
+                                                                                          | CONT_MARKER { prompt, stackPos } => CONT_MARKER { prompt = prompt, stackPos = stackPos - s }
+                                                                                          | DUMMY_FRAME => DUMMY_FRAME
                                                                                           ) frameSlice
                                                               val stackSlice = ArraySlice.vector (ArraySlice.slice (stack, s, SOME (stackTop - s)))
                                                               val stackTop = push (stack, s, b)
@@ -200,11 +201,13 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                              in case (a, b) of
                                     (SUBCONT (stackSlice, frameSlice), CLOSURE (insns', _)) =>
                                     let val () = Array.update (frames, framesTop, CALL_FRAME { base = base, return = insns })
+                                        val framesTop = framesTop + 1
                                         val frameSlice = Vector.map (fn CALL_FRAME { base, return } => CALL_FRAME { base = base + stackTop, return = return }
-                                                                    | f => f
+                                                                    | CONT_MARKER { prompt, stackPos } => CONT_MARKER { prompt = prompt, stackPos = stackPos + stackTop }
+                                                                    | DUMMY_FRAME => DUMMY_FRAME
                                                                     ) frameSlice
-                                        val () = Array.copyVec { src = frameSlice, dst = frames, di = framesTop + 1 }
-                                        val framesTop = framesTop + 1 + Vector.length frameSlice
+                                        val () = Array.copyVec { src = frameSlice, dst = frames, di = framesTop }
+                                        val framesTop = framesTop + Vector.length frameSlice
                                         val () = Array.copyVec { src = stackSlice, dst = stack, di = stackTop }
                                         val stackTop = stackTop + Vector.length stackSlice
                                         val stackTop = push (stack, stackTop, b)
