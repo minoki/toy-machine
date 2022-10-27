@@ -15,7 +15,7 @@ val lexer = let val i = ref 0
             end
 val (program, _) = SExpParser.parse (0, lexer, print_error, ());
 val program = ParseSExp.parseProgram program;
-List.app (fn exp => print (Syntax.toString exp ^ "\n")) program;
+List.app (fn stmt => print (Syntax.stmtToString stmt ^ "\n")) program;
 print "---\n";
 val insns = Compiler.compileProgram program;
 List.app (fn insn => print (Instruction.toString insn ^ "\n")) insns;

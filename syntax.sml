@@ -25,6 +25,9 @@ datatype exp = NIL
              | CAR of exp
              | CDR of exp
              | IS_PAIR of exp
+     and stmt = DEFINE_LAMBDA of string * string * exp
+              | DEFINE of string * exp
+              | EXP of exp
 fun toString NIL = "nil"
   | toString (INT n) = Int.toString n
   | toString (BOOL n) = Bool.toString n
@@ -51,6 +54,9 @@ fun toString NIL = "nil"
   | toString (CAR a) = "(car " ^ toString a ^ ")"
   | toString (CDR a) = "(cdr " ^ toString a ^ ")"
   | toString (IS_PAIR a) = "(pair? " ^ toString a ^ ")"
+fun stmtToString (DEFINE_LAMBDA (v, w, body)) = "(define (" ^ v ^ " " ^ w ^ ") " ^ toString body ^ ")"
+  | stmtToString (DEFINE (v, x)) = "(define " ^ v ^ " " ^ toString x ^ ")"
+  | stmtToString (EXP x) = toString x
 structure StringSet = RedBlackSetFn (open String; type ord_key = string)
 (* freeVars : StringSet.set * exp -> StringSet.set *)
 fun freeVars (bound, NIL) = StringSet.empty

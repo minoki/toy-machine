@@ -85,7 +85,19 @@ and compileLambda (env, f as LAMBDA (name, body))
       in (innerEnv, prepare @ [OP_CLOSURE { body = compileExp (StringMap.insert (innerEnv, name, LOCAL 1), 2, true, body) @ [OP_RETURN], nFreeVars = n }])
       end
   | compileLambda (env, exp) = raise Fail "invalid expression in letrec"
-fun compileProgram [] = []
-  | compileProgram (x :: xs) = compileExp (StringMap.empty, 0, false, x) @ OP_POP :: compileProgram xs
+fun compileStmt (env, top, DEFINE_LAMBDA (f, param, body))
+    = let val uninitEnv = StringMap.insert (env, f, UNINITIALIZED)
+          val (innerEnv, insns) = compileLambda (uninitEnv, LAMBDA (param, body))
+          val insns = case StringMap.find (innerEnv, f) of
+                          SOME (FREE i) => insns @ [OP_FIX_CLOSURE { target = top, freeIndex = i, real = top }]
+                        | _ => insns
+      in (StringMap.insert (env, f, LOCAL top), top + 1, insns)
+      end
+  | compileStmt (env, top, DEFINE (v, x)) = (StringMap.insert (env, v, LOCAL top), top + 1, compileExp (env, top, false, x))
+  | compileStmt (env, top, EXP x) = (env, top, compileExp (env, top, false, x) @ [OP_POP])
+fun compileProgram stmts = #3 (List.foldl (fn (stmt, (env, top, insns)) =>
+                                              let val (env, top, insns') = compileStmt (env, top, stmt)
+                                              in (env, top, insns @ insns')
+                                              end) (StringMap.empty, 0, []) stmts)
 end
 end;

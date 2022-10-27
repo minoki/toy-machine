@@ -37,6 +37,12 @@ and parseBinding (X.LIST [X.ID v, x]) = (v, parseExp x)
 and parseSequence [] = raise Fail "empty sequence"
   | parseSequence [x] = parseExp x
   | parseSequence xs = S.SEQUENCE (List.map parseExp xs)
-fun parseProgram xs = List.map parseExp xs
+fun parseStmt (X.LIST [X.ID "define", X.ID v, a]) = (case parseExp a of
+                                                         S.LAMBDA (w, body) => S.DEFINE_LAMBDA (v, w, body)
+                                                       | x => S.DEFINE (v, x)
+                                                    )
+  | parseStmt (X.LIST (X.ID "define" :: X.LIST [X.ID v, X.ID w] :: body)) = S.DEFINE_LAMBDA (v, w, parseSequence body)
+  | parseStmt x = S.EXP (parseExp x)
+fun parseProgram xs = List.map parseStmt xs
 end
 end;

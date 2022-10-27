@@ -1,6 +1,10 @@
 Syntax:
 
 ```
+<stmt> ::= (define <id> <exp>)
+         | (define (<id> <id>) <exp>+)
+         | <exp>
+
 <exp> ::= '()
         | #f
         | #t
