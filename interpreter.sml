@@ -3,6 +3,10 @@ type prompt = unit ref
 datatype frame = CALL_FRAME of { base : int
                                , return : Instruction.instruction list
                                }
+               | EXN_FRAME of { handler : Instruction.instruction list
+                              , stackPos : int
+                              , base : int
+                              }
                | CONT_MARKER of { prompt : prompt, stackPos : int }
                | DUMMY_FRAME
 datatype value = NIL
@@ -48,7 +52,10 @@ local open Instruction
       fun dumpStack (stack, 0) = print "stack: empty\n"
         | dumpStack (stack, stackTop) = ArraySlice.appi (fn (i, x) => print ("stack #" ^ Int.toString i ^ ": " ^ valueToString x ^ "\n")) (ArraySlice.slice (stack, 0, SOME stackTop))
       fun dumpFrames (frames, 0) = print "frame: empty\n"
-        | dumpFrames (frames, framesTop) = ArraySlice.appi (fn (i, x) => print ("frame #" ^ Int.toString i ^ ": " ^ (case x of CALL_FRAME { base, return } => "CALL_FRAME " ^ Int.toString base | CONT_MARKER { prompt, stackPos } => "CONT_MARKER " ^ Int.toString stackPos | DUMMY_FRAME => "DUMMY_FRAME") ^ "\n")) (ArraySlice.slice (frames, 0, SOME framesTop))
+        | dumpFrames (frames, framesTop) = ArraySlice.appi (fn (i, x) => print ("frame #" ^ Int.toString i ^ ": " ^ (case x of CALL_FRAME { base, return } => "CALL_FRAME " ^ Int.toString base
+                                                                                                                             | EXN_FRAME { handler, stackPos, base } => "EXN_FRAME " ^ Int.toString stackPos ^ "," ^ Int.toString base
+                                                                                                                             | CONT_MARKER { prompt, stackPos } => "CONT_MARKER " ^ Int.toString stackPos
+                                                                                                                             | DUMMY_FRAME => "DUMMY_FRAME") ^ "\n")) (ArraySlice.slice (frames, 0, SOME framesTop))
 in
 fun newFrames () = Array.array (100, DUMMY_FRAME)
 fun newStack () = Array.array (100, BOGUS)
@@ -157,6 +164,31 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                       in print (valueToString a ^ "\n")
                        ; run (insns, stack, push (stack, stackTop, NIL), frames, framesTop, base)
                       end
+        | OP_RAISE => let val (stackTop, a) = pop (stack, stackTop)
+                          fun lookup i = if i < 0 then
+                                             NONE
+                                         else
+                                             (* TODO: This is slow *)
+                                             case Array.sub (frames, i) of
+                                                 EXN_FRAME f => SOME (i, f)
+                                               | _ => lookup (i - 1)
+                      in case lookup (framesTop - 1) of
+                             SOME (i, { handler, stackPos, base }) =>
+                             let val () = ArraySlice.modify (fn _ => DUMMY_FRAME) (ArraySlice.slice (frames, i, SOME (framesTop - i)))
+                                 val () = ArraySlice.modify (fn _ => BOGUS) (ArraySlice.slice (stack, stackPos, SOME (stackTop - stackPos)))
+                                 val stackTop = push (stack, stackPos, a)
+                             in run (handler, stack, stackTop, frames, i, base)
+                             end
+                           | NONE => ( print ("Uncaught exception: " ^ valueToString a ^ "\n")
+                                     ; ()
+                                     )
+                      end
+        | OP_PUSH_HANDLER offset => let val () = Array.update (frames, framesTop, EXN_FRAME { handler = List.drop (insns, offset), stackPos = stackTop, base = base })
+                                    in run (insns, stack, stackTop, frames, framesTop + 1, base)
+                                    end
+        | OP_POP_HANDLER offset => let val () = Array.update (frames, framesTop - 1, DUMMY_FRAME)
+                                   in run (List.drop (insns, offset), stack, stackTop, frames, framesTop - 1, base)
+                                   end
         | OP_NEW_PROMPT => run (insns, stack, push (stack, stackTop, PROMPT (ref ())), frames, framesTop, base)
         | OP_PUSH_PROMPT => let val (stackTop, b) = pop (stack, stackTop)
                                 val (stackTop, a) = pop (stack, stackTop)
@@ -192,6 +224,7 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                                                                                in ArraySlice.vector slice before ArraySlice.modify (fn _ => DUMMY_FRAME) slice
                                                                                end
                                                               val frameSlice = Vector.map (fn CALL_FRAME { base, return } => CALL_FRAME { base = base - s, return = return }
+                                                                                          | EXN_FRAME { handler, stackPos, base } => EXN_FRAME { handler = handler, stackPos = stackPos - s, base = base - s }
                                                                                           | CONT_MARKER { prompt, stackPos } => CONT_MARKER { prompt = prompt, stackPos = stackPos - s }
                                                                                           | DUMMY_FRAME => DUMMY_FRAME
                                                                                           ) frameSlice
@@ -213,6 +246,7 @@ fun run ([], stack, stackTop, frames, framesTop, base) = ()
                                     let val () = Array.update (frames, framesTop, CALL_FRAME { base = base, return = insns })
                                         val framesTop = framesTop + 1
                                         val frameSlice = Vector.map (fn CALL_FRAME { base, return } => CALL_FRAME { base = base + stackTop, return = return }
+                                                                    | EXN_FRAME { handler, stackPos, base } => EXN_FRAME { handler = handler, stackPos = stackPos + stackTop, base = base + stackTop }
                                                                     | CONT_MARKER { prompt, stackPos } => CONT_MARKER { prompt = prompt, stackPos = stackPos + stackTop }
                                                                     | DUMMY_FRAME => DUMMY_FRAME
                                                                     ) frameSlice

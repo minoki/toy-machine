@@ -21,6 +21,9 @@ datatype instruction = OP_POP
                      | OP_LT
                      | OP_LE
                      | OP_PRINT
+                     | OP_RAISE
+                     | OP_PUSH_HANDLER of int
+                     | OP_POP_HANDLER of int
                      | OP_NEW_PROMPT
                      | OP_PUSH_PROMPT
                      | OP_WITH_SUBCONT
@@ -52,6 +55,9 @@ fun toString OP_POP = "OP_POP"
   | toString OP_LT = "OP_LT"
   | toString OP_LE = "OP_LE"
   | toString OP_PRINT = "OP_PRINT"
+  | toString OP_RAISE = "OP_RAISE"
+  | toString (OP_PUSH_HANDLER offset) = "OP_PUSH_HANDLER(" ^ Int.toString offset ^ ")"
+  | toString (OP_POP_HANDLER offset) = "OP_POP_HANDLER(" ^ Int.toString offset ^ ")"
   | toString OP_NEW_PROMPT = "OP_NEW_PROMPT"
   | toString OP_PUSH_PROMPT = "OP_PUSH_PROMPT"
   | toString OP_WITH_SUBCONT = "OP_WITH_SUBCONT"

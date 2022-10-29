@@ -64,6 +64,11 @@ fun compileExp (env, top, isTail, NIL) = [OP_PUSH_NIL]
   | compileExp (env, top, isTail, LT (a, b)) = compileExp (env, top, false, a) @ compileExp (env, top + 1, false, b) @ [OP_LT]
   | compileExp (env, top, isTail, LE (a, b)) = compileExp (env, top, false, a) @ compileExp (env, top + 1, false, b) @ [OP_LE]
   | compileExp (env, top, isTail, PRINT a) = compileExp (env, top, false, a) @ [OP_PRINT]
+  | compileExp (env, top, isTail, RAISE a) = compileExp (env, top, false, a) @ [OP_RAISE]
+  | compileExp (env, top, isTail, HANDLE (a, name, b)) = let val handler = compileExp (StringMap.insert (env, name, LOCAL top), top + 1, isTail, b) @ [OP_POP_EXCEPT_TOP 1]
+                                                             val body = compileExp (env, top, false, a) @ [OP_POP_HANDLER (List.length handler)]
+                                                         in OP_PUSH_HANDLER (List.length body) :: body @ handler
+                                                         end
   | compileExp (env, top, isTail, NEW_PROMPT) = [OP_NEW_PROMPT]
   | compileExp (env, top, isTail, PUSH_PROMPT (a, b)) = compileExp (env, top, false, a) @ compileExp (env, top + 1, false, b) @ [OP_PUSH_PROMPT]
   | compileExp (env, top, isTail, WITH_SUBCONT (a, b)) = compileExp (env, top, false, a) @ compileExp (env, top + 1, false, b) @ [OP_WITH_SUBCONT]

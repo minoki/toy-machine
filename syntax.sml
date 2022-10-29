@@ -15,6 +15,8 @@ datatype exp = NIL
              | LT of exp * exp
              | LE of exp * exp
              | PRINT of exp
+             | RAISE of exp
+             | HANDLE of exp * string * exp
              | NEW_PROMPT
              | PUSH_PROMPT of exp * exp
              | WITH_SUBCONT of exp * exp
@@ -44,6 +46,8 @@ fun toString NIL = "nil"
   | toString (LT (a, b)) = "(< " ^ toString a ^ " " ^ toString b ^ ")"
   | toString (LE (a, b)) = "(<= " ^ toString a ^ " " ^ toString b ^ ")"
   | toString (PRINT a) = "(display " ^ toString a ^ ")"
+  | toString (RAISE a) = "(raise " ^ toString a ^ ")"
+  | toString (HANDLE (a, name, b)) = "(handle " ^ toString a ^ " " ^ name ^ " " ^ toString b ^ ")"
   | toString NEW_PROMPT = "(new-prompt)"
   | toString (PUSH_PROMPT (a, b)) = "(push-prompt " ^ toString a ^ " " ^ toString b ^ ")"
   | toString (WITH_SUBCONT (a, b)) = "(with-subcont " ^ toString a ^ " " ^ toString b ^ ")"
@@ -81,6 +85,8 @@ fun freeVars (bound, NIL) = StringSet.empty
   | freeVars (bound, LT (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
   | freeVars (bound, LE (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
   | freeVars (bound, PRINT a) = freeVars (bound, a)
+  | freeVars (bound, RAISE a) = freeVars (bound, a)
+  | freeVars (bound, HANDLE (a, name, b)) = StringSet.union (freeVars (bound, a), freeVars (StringSet.add (bound, name), b))
   | freeVars (bound, NEW_PROMPT) = StringSet.empty
   | freeVars (bound, PUSH_PROMPT (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))
   | freeVars (bound, WITH_SUBCONT (a, b)) = StringSet.union (freeVars (bound, a), freeVars (bound, b))

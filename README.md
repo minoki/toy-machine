@@ -24,6 +24,8 @@ Syntax:
         | (< <exp> <exp>)
         | (<= <exp> <exp>)
         | (display <exp>)
+        | (raise <exp>)
+        | (handle <exp> <id> <exp>)
         | (new-prompt)
         | (push-prompt <exp> <exp>)  ; (push-prompt <prompt> (lambda (_) <body>))
         | (with-subcont <exp> <exp>) ; (with-subcont <prompt> (lambda (subcont) <body>))
